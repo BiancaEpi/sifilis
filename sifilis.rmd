@@ -1,0 +1,641 @@
+---
+title: "Painel de Monitoramento da Sífilis"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    
+runtime: shiny
+---
+<style>                     
+.navbar {
+  background-color:#647494;
+}
+.navbar-inverse .navbar-nav > li > a:hover,
+.navbar-inverse .navbar-nav > li > a:focus {
+    background-color: #e5590f;
+    color: white;
+}
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+  color: white;
+  background-color: #e5590f;
+}
+.navbar-inverse .navbar-toggle:hover,
+.navbar-inverse .navbar-toggle:focus {
+  background-color: #e5590f;
+}
+.navbar-inverse .navbar-collapse,
+.navbar-inverse .navbar-form {
+  border-color: #e5590f;
+}
+
+</style>
+
+
+
+```{r setup, include=FALSE}
+
+# pacotes
+
+pacman::p_load(
+  flexdashboard,
+  tidyverse,
+  dygraphs,
+  stringi,
+  xts,
+  rio,
+  lubridate,
+  here,
+  stringr,
+  Matrix,
+  thematic,
+  foreign,
+  forcats,
+  fs, 
+  sf,
+  epikit,
+  shiny,
+  plotly,
+  geobr,
+  DT,
+  janitor,
+  viridis,
+   echarts4r) 
+
+mycolors <- c("#6969B3", "darkblue", "#647494",  "#e5590f")
+
+
+# importar dados sinan 
+
+adquirida <- import("SifilisAdquirida.dbf")
+congenita <- import("SifilisCongênita.dbf")
+gestante <- import("SifilisGestante.dbf")
+
+# import população
+
+populacao <- import("populacao.xlsx")
+
+# import região
+
+regiao <- import("regionais.csv")
+regiao <- regiao %>% mutate_if(is.character, toupper) #maiuscula
+regiao$NM_MUNICIP <- regiao$NM_MUNICIP %>% stri_trans_general("Latin-ASCII") #acentos
+
+
+
+# join população + regiao 
+
+populacao <- left_join(populacao, regiao, by = c("nom_municipio" = "NM_MUNICIP"))
+
+# selecionando as variáveis de interesse do banco de população
+
+populacao <- populacao %>% 
+  select(cod_municipio_ibge,nom_municipio,pop_2010, pop_2022, CD_GEOCMU, reg_saude)
+
+
+populacao <- populacao %>% 
+  rename(cod_municipio_7dig = CD_GEOCMU)
+
+
+# unindo os bancos --------------------------------------------------------
+
+# join do banco de população em cada município de residência
+#adquirida <- left_join(adquirida, populacao, by = c("ID_MN_RESI" = "cod_municipio_ibge"))
+
+
+#rename 
+# adquirida <- adquirida %>% 
+#   rename(municipio_residencia = nom_municipio,
+#          populacao_residente  = pop_2022)
+
+
+
+# Classificação final --------------------------------------------------------
+
+adquirida <- adquirida %>% 
+  mutate(classificacao = recode(CLASSI_FIN,
+                                "1" = "Confirmado",
+                                "2" = "Descartado",
+                                "8" = "ignorados"))
+
+adquirida <- adquirida %>% 
+  mutate(classificacao = replace_na(classificacao, "Suspeito"))
+
+
+gestante <- gestante %>% 
+  mutate(classificacao = recode(CLASSI_FIN,
+                                "1" = "Confirmado",
+                                "2" = "Descartado"))
+
+gestante <- gestante %>% 
+  mutate(classificacao = replace_na(classificacao, "Suspeito"))
+
+
+
+
+## evolução ----
+adquirida <- adquirida %>% 
+  mutate(evolucao = recode(EVOLUCAO,
+                           "1" = "Cura",
+                           "2" = "Óbito por sifilisspirose",
+                           "3" = "Óbito por outras causas",
+                           "9" = "ignorado"))
+
+congenita <- congenita %>% 
+  mutate(evolucao = recode(EVOLUCAO,
+                           "1" = "Vivo",
+                           "2" = "Óbito por sífilis congênita",
+                           "3" = "Óbito por outras causas",
+                           "4" = "Aborto",
+                           "5" =  "Natimorto",
+                           "9" = "ignorado"))
+
+
+# semana epiemiológica ----------------------------------------------------
+
+
+  adquirida <- adquirida %>% 
+ mutate(
+    DT_SIN_PRI = as.Date(DT_SIN_PRI),
+    mes_diag = floor_date(DT_SIN_PRI, unit= "month"), 
+    epi_week = epiweek(DT_SIN_PRI), # número da semana epidemiológica
+    ano = substr(SEM_PRI, 1, 4))
+    
+
+congenita <- congenita %>% 
+ mutate( DT_DIAG = as.Date(DT_DIAG),
+         epi_semana = floor_date(DT_DIAG, unit= "week"),
+         mes_sint = floor_date(DT_DIAG, unit= "month"),
+         ano = substr(SEM_PRI, 1, 4))
+
+gestante <- gestante %>% 
+ mutate( DT_DIAG = as.Date(DT_DIAG),
+         epi_semana = floor_date(DT_DIAG, unit= "week"),
+         mes_sint = floor_date(DT_DIAG, unit= "month"),
+         ano = substr(SEM_DIAG, 1, 4))
+
+
+# idade congenita
+congenita <- congenita %>% 
+mutate(idade = substr(NU_IDADE_N, 1, 2),
+       faixa_etaria = recode(idade,
+                           "20" = "< 30 dias",
+                           "30" = "> 30 dias e < 1 ano",
+                           "40" = "> 1 ano"))
+
+
+
+# idade adquirida
+# adquirida$idade <- as.numeric((adquirida$DT_DIAG - adquirida$DT_NASC)/365)
+# 
+# # faixa etária 
+# adquirida <- adquirida %>% 
+#   mutate(faixa_etaria = age_categories(idade, 
+#                                        lower=0, 
+#                                        upper=70, 
+#                                        by=10))
+
+
+
+
+
+# Filtro para os residentes em Santa Catarina 
+
+adquirida <- adquirida %>% 
+ filter(SG_UF == "42")
+
+congenita <- congenita %>% 
+ filter(SG_UF == "42")
+
+
+
+
+
+
+
+```
+
+
+# Sífilis Adquirida {data-navmenu="Sífilis Adquirida"}
+
+## Sidebar {.sidebar}
+
+```{r}
+# insere espaços
+HTML("<br>")
+
+selectInput("ano",  # nome do botao
+            label = "Ano:",  
+            selected = "2024",
+            choices = unique(sort(adquirida$ano))
+            )
+
+
+
+
+```
+
+Use os **filtros** para selecionar o ano, a região de saúde e município de residência. 
+
+<br>
+
+**Fonte dos dados:** Os dados são provenientes das notificações pelos municípios no Sistema de Informação de Agravos de Notificação [SINAN](https://sinan.saude.gov.br/sinan). Os dados são parciais e sujeitos as alterações. 
+
+<br> 
+
+**Elaborado por:** Centro de Informações Estratégicas de Vigilância em Saúde/Unidade de Resposta Rápida [CIEVS-SC](https://dive.sc.gov.br/index.php/cievs) 
+
+![](cievs_nacional.png){width="200"}
+
+## Row 1
+
+### Chart Notificações
+
+```{r}
+
+renderValueBox({
+  
+  adquirida_ano <- adquirida[which(adquirida$ano == input$ano),]
+  
+    notificacoes <- adquirida_ano %>% 
+    count()
+  
+  
+  valueBox(
+    value = notificacoes,
+    caption = "Notificações",
+    color = "white")
+
+})
+
+```
+
+### Chart Casos Confirmados
+
+```{r}
+
+renderValueBox({
+  
+  adquirida_ano <- adquirida[which(adquirida$ano == input$ano),]
+  
+    confirmados <- adquirida_ano %>% 
+    filter(classificacao== "Confirmado")%>% 
+    count()
+  
+  
+  valueBox(
+    value = confirmados,
+    caption = "Confirmados",
+    color = "white")
+
+})
+
+
+```
+
+### Chart Casos Suspeitos
+
+```{r}
+renderValueBox({
+  
+  adquirida_ano <- adquirida[which(adquirida$ano == input$ano),]
+  
+    suspeito <- adquirida_ano %>% 
+    filter(classificacao== "Suspeito")%>% 
+    count()
+  
+  
+  valueBox(
+    value = suspeito,
+    caption = "Suspeitos",
+    color = "white")
+
+})
+
+```
+
+
+### Chart Casos Descartados
+
+```{r}
+renderValueBox({
+  
+  adquirida_ano <- adquirida[which(adquirida$ano == input$ano),]
+  
+    descartados <- adquirida_ano %>% 
+    filter(classificacao== "Descartado")%>% 
+    count()
+  
+  
+  valueBox(
+    value = descartados,
+    caption = "Descartados",
+    color = "white")
+
+})
+```
+
+
+### Chart Óbitos
+
+```{r}
+renderValueBox({
+  
+  adquirida_ano <- adquirida[which(adquirida$ano == input$ano),]
+  
+    obito <- adquirida_ano %>% 
+    filter(EVOLUCAO== "2")%>% 
+    count()
+  
+  
+  valueBox(
+    value = obito,
+    caption = "obitos",
+    color = "white")
+
+})
+```
+
+
+## Row 2 {data-height="600"}
+
+### gráfico 1.
+
+```{r}
+echarts4r::renderEcharts4r({
+
+    adquirida_ano <- adquirida[which(adquirida$ano == input$ano),]
+
+
+      adquirida_ano %>%
+      filter(classificacao== "Confirmado") %>%
+      dplyr::group_by(mes_diag) %>%
+      summarise(casos= n()) %>%
+      e_charts(x= mes_diag) %>%
+      e_bar(serie= casos) %>%
+      e_tooltip(trigger = "axis") %>%
+      e_color(mycolors) %>%
+      e_legend(orientation = "vertical",  right = "5%", top="15%") %>%
+      e_title(text= "Casos de Sífilis Adquirida",
+              subtext = "Segundo mês de início de sintomas",
+              left = "center") %>%
+      e_animation(duration = 8000)
+ 
+})
+
+```
+
+# Sífilis Gestantes {data-navmenu="Sífilis Gestantes"}
+
+## Sidebar {.sidebar}
+
+```{r}
+# insere espaços
+HTML("<br>")
+
+selectInput("ano_gest",  # nome do botao
+            label = "Ano:",  
+            selected = "2024",
+            choices = unique(sort(gestante$ano))
+            )
+
+
+
+
+```
+
+Use os **filtros** para selecionar o ano, a região de saúde e município de residência. 
+
+<br>
+
+**Fonte dos dados:** Os dados são provenientes das notificações pelos municípios no Sistema de Informação de Agravos de Notificação [SINAN](https://sinan.saude.gov.br/sinan). Os dados são parciais e sujeitos as alterações. 
+
+<br> 
+
+**Elaborado por:** Centro de Informações Estratégicas de Vigilância em Saúde/Unidade de Resposta Rápida [CIEVS-SC](https://dive.sc.gov.br/index.php/cievs) 
+
+![](cievs_nacional.png){width="200"}
+
+## Row 1
+
+### Chart Notificações
+
+```{r}
+
+renderValueBox({
+  
+  gestante_ano <- gestante[which(gestante$ano == input$ano_gest),]
+  
+    notificacoes <- gestante_ano %>% 
+    count()
+  
+  
+  valueBox(
+    value = notificacoes,
+    caption = "Notificações",
+    color = "white")
+
+})
+
+```
+
+### Chart Casos Confirmados
+
+```{r}
+
+renderValueBox({
+  
+  gestante_ano <- gestante[which(gestante$ano == input$ano_gest),]
+  
+    confirmados <- gestante_ano %>% 
+    filter(CLASSI_FIN== "1")%>% 
+    count()
+  
+  
+  valueBox(
+    value = confirmados,
+    caption = "Confirmados",
+    color = "white")
+
+})
+
+
+```
+
+### Chart Casos Suspeitos
+
+```{r}
+renderValueBox({
+  
+  gestante_ano <- gestante[which(gestante$ano == input$ano_gest),]
+  
+    suspeito <- gestante_ano %>% 
+    filter(classificacao== "Suspeito")%>% 
+    count()
+  
+  
+  valueBox(
+    value = suspeito,
+    caption = "Suspeitos",
+    color = "white")
+
+})
+
+```
+
+
+### Chart Casos Descartados
+
+```{r}
+renderValueBox({
+  
+  gestante_ano <- gestante[which(gestante$ano == input$ano_gest),]
+  
+    descartados <- gestante_ano %>% 
+    filter(CLASSI_FIN== 2)%>% 
+    count()
+  
+  
+  valueBox(
+    value = descartados,
+    caption = "Descartados",
+    color = "white")
+
+})
+```
+
+## Row 2 {data-height="600"}
+
+### gráfico 1.
+
+
+
+```{r}
+echarts4r::renderEcharts4r({
+
+    gestante_ano <- gestante[which(gestante$ano == input$ano_gest),]
+
+
+      gestante_ano %>%
+      filter(classificacao== "Confirmado") %>%
+      dplyr::group_by(mes_sint) %>%
+      summarise(casos= n()) %>%
+      e_charts(x= mes_sint) %>%
+      e_bar(serie= casos) %>%
+      e_tooltip(trigger = "axis") %>%
+      e_color(mycolors) %>%
+      e_legend(orientation = "vertical",  right = "5%", top="15%") %>%
+      e_title(text= "Casos de Sífilis em gestantes",
+              subtext = "Segundo mês de diagnóstico",
+              left = "center") %>%
+      e_animation(duration = 8000)
+ 
+})
+```
+
+
+
+# Sífilis Congênita {data-navmenu="Sífilis Congênita"}
+
+## Sidebar {.sidebar}
+
+```{r}
+# insere espaços
+HTML("<br>")
+
+selectInput("ano_cong",  # nome do botao
+            label = "Ano:",  
+            selected = "2024",
+            choices = unique(sort(congenita$ano))
+            )
+
+
+
+
+```
+
+Use os **filtros** para selecionar o ano, a região de saúde e município de residência. 
+
+<br>
+
+**Fonte dos dados:** Os dados são provenientes das notificações pelos municípios no Sistema de Informação de Agravos de Notificação [SINAN](https://sinan.saude.gov.br/sinan). Os dados são parciais e sujeitos as alterações. 
+
+<br> 
+
+**Elaborado por:** Centro de Informações Estratégicas de Vigilância em Saúde/Unidade de Resposta Rápida [CIEVS-SC](https://dive.sc.gov.br/index.php/cievs) 
+
+![](cievs_nacional.png){width="200"}
+
+## Row 1
+
+### Chart Casos Confirmados
+
+```{r}
+
+renderValueBox({
+  
+  congenita_ano <- congenita[which(congenita$ano == input$ano_cong),]
+  
+    confirmados <- congenita_ano %>% 
+    count()
+  
+  
+  valueBox(
+    value = confirmados,
+    caption = "Confirmados",
+    color = "white")
+
+})
+
+
+```
+
+
+### Chart Óbitos
+
+```{r}
+renderValueBox({
+  
+  congenita_ano <- congenita[which(congenita$ano == input$ano_cong),]
+  
+    obito <- congenita_ano %>% 
+    filter(EVOLUCAO== "2")%>% 
+    count()
+  
+  
+  valueBox(
+    value = obito,
+    caption = "obitos",
+    color = "white")
+
+})
+```
+
+## Row 2 {data-height="600"}
+
+### gráfico 1.
+
+```{r}
+echarts4r::renderEcharts4r({
+
+    congenita_ano <- congenita[which(congenita$ano == input$ano_cong),]
+
+
+      congenita_ano %>%
+      dplyr::group_by(mes_sint) %>%
+      summarise(casos= n()) %>%
+      e_charts(x= mes_sint) %>%
+      e_bar(serie= casos) %>%
+      e_tooltip(trigger = "axis") %>%
+      e_color(mycolors) %>%
+      e_legend(orientation = "vertical",  right = "5%", top="15%") %>%
+      e_title(text= "Casos de Sífilis congênita",
+              subtext = "Segundo mês de diagnóstico",
+              left = "center") %>%
+      e_animation(duration = 8000)
+ 
+})
+```
+

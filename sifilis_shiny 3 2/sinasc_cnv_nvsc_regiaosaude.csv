@@ -1,0 +1,36 @@
+ Nascidos vivos - Santa Catarina
+Nascim p/resid.mãe por Região de Saúde (CIR) e Ano do nascimento
+Período:2013-2022
+"Região de Saúde (CIR)";"2013";"2014";"2015";"2016";"2017";"2018";"2019";"2020";"2021";"2022";"Total"
+"42001 Extremo Oeste";2666;2891;2971;2898;2990;3048;3030;2842;2963;2909;29208
+"42002 Oeste";4916;5013;5160;5067;5405;5505;5642;5693;5591;5709;53701
+"42003 Xanxerê";2675;2735;2981;2855;2943;3103;2959;2950;2953;2964;29118
+"42004 Alto Vale do Itajaí";3789;3751;4045;3887;3984;4091;4077;3981;3973;4075;39653
+"42005 Foz do Rio Itajaí";9097;9688;10398;10275;10668;11012;10894;11115;11013;11221;105381
+"42006 Médio Vale do Itajaí";9138;9611;9748;9657;10088;10285;10165;10187;10000;10159;99038
+"42007 Grande Florianópolis";14507;15020;15830;15621;16455;16574;16149;16104;15906;16199;158365
+"42008 Meio Oeste";2398;2443;2567;2606;2647;2689;2658;2550;2581;2719;25858
+"42009 Alto Vale do Rio do Peixe";4327;4299;4480;4390;4223;4471;4318;4274;4132;4199;43113
+"42010 Alto Uruguai Catarinense";1655;1826;1875;1745;1996;1910;2005;2019;1961;2008;19000
+"42011 Nordeste";9520;9895;10308;9874;10047;10151;9799;10002;9482;9632;98710
+"42012 Planalto Norte";5064;5195;5377;5122;5111;5251;5033;4914;4889;4922;50878
+"42013 Serra Catarinense";3983;4134;4131;4241;4222;4090;3996;3986;3796;3808;40387
+"42014 Extremo Sul Catarinense";2393;2547;2581;2637;2698;2695;2765;2710;2694;2757;26477
+"42015 Carbonífera";5430;5727;5791;5693;5733;5818;5582;5593;5593;5709;56669
+"42016 Laguna";4369;4425;4595;4596;4848;4697;4813;4687;4723;4801;46554
+"42017 Vale do Itapocú";3947;4032;4383;4148;4276;4219;4144;4307;4248;4409;42113
+"Ignorado - SC";1;-;2;1;1;-;3;2;1;2;13
+"Total";89875;93232;97223;95313;98335;99609;98032;97916;96499;98202;964236
+ Fonte: MS/SVS/CGIAE - Sistema de Informações sobre Nascidos Vivos - SINASC
+ Consulte o site da Secretaria Estadual de Saúde para mais informações.
+ Nota:
+ 
+ Em 2011, houve uma mudança no conteúdo da Declaração de Nascidos Vivos, com maior detalhamento das informações coletadas. Para este ano, foram
+ utilizados simultaneamente os dois formulários. Para mais detalhes sobre as mudanças ocorridas e os seus efeitos, veja o documento
+ "Consolidação do Sistema de Informações sobre Nascidos Vivos - 2011".
+ 
+ * A categorização da "Adequação quantitativa de pré-natal" mostrada na variável "Adeq quant pré-natal" considera o início do
+ pré-natal no primeiro trimestre e um mínimo de seis consultas de pré-natal –, sendo gravada em campo chamado Kotelchuck no
+ arquivo disponível para download, calculado a partir dos campos “33 – Número de consultas pré-natal” (Mesprenat) e “34 – Mês de gestação em que iniciou o pré-natal” (Consprenat).
+ Maiores informações no documento "Saúde Brasil 2017: uma análise da situação de saúde e os desafios para o alcance dos Objetivos de Desenvolvi
+ 
