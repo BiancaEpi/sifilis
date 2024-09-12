@@ -14,14 +14,20 @@ Filtros interativos para análise detalhada por ano epidemiológico e tipo de s�
 3. Tecnologias Utilizadas
 
 R Shiny: Para a criação da interface interativa.
+
 Echarts4r: Para visualização de gráficos dinâmicos.
+
 dplyr e tidyr: Para manipulação e transformação dos dados.
+
 Leaflet: para construção de mapas.
+
 GitHub: Para versionamento e colaboração.
 
-4. Fonte de dados 
+4. Fonte de dados
+   
 As bases de dados utilizadas são provenientes do SISTEMA DE INFORMAÇÃO DE AGRAVOS DE NOTIFICAÇÃO (SINAN) do Ministério da Saúde. Esta análise foi aplicada para o Estado de Santa Catarina sendo possível adaptar a outras realidades apenas mudando o UF de residência.
 
-5. Mais informações:
+6. Mais informações:
+   
    http://www.portalsinan.saude.gov.br/sifilis-congenita 
 
