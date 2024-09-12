@@ -1,10 +1,14 @@
 
 1. Descrição do Projeto
+   
 O Painel de Monitoramento da Sífilis é uma ferramenta interativa desenvolvida para visualizar e acompanhar os dados de sífilis adquirida, sífilis congênita e sífilis em gestantes no Estado de Santa Catarina. Seu objetivo é fornecer insights sobre a distribuição de casos ao longo do tempo e apoiar a tomada de decisão dos gestores em saúde pública.
 
 3. Funcionalidades Principais
+   
 Visualização de séries temporais de casos de sífilis por ano e por mês.
+
 Comparação de taxas de detecção entre diferentes regiões.
+
 Filtros interativos para análise detalhada por ano epidemiológico e tipo de sífilis.
 
 3. Tecnologias Utilizadas
