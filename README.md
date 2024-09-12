@@ -1,11 +1,23 @@
 
-Esse projeto é o desenvolvimento de um Painel de Monitoramento da Sífilis desenvolvido para o uso dos técnicos da Vigilância Epidemiológica de Santa Catarina.
+1. Descrição do Projeto
+O Painel de Monitoramento da Sífilis é uma ferramenta interativa desenvolvida para visualizar e acompanhar os dados de sífilis adquirida, sífilis congênita e sífilis em gestantes no Estado de Santa Catarina. Seu objetivo é fornecer insights sobre a distribuição de casos ao longo do tempo e apoiar a tomada de decisão dos gestores em saúde pública.
 
-As bases de dados utilizadas são provenientes do SISTEMA DE INFORMAÇÃO DE AGRAVOS DE NOTIFICAÇÃO (SINAN) do Ministério da Saúde. Esta análise foi aplicada para o Estado de Santa Catarina sendo possível adaptar a outras realidades apenas mudando o UF de residência. 
-O painel está dividido em quatros menus: Sífilis Adquirida, Sífilis Congênita e Sífilis Gestante, e um menu chamado outras análises.
-Foram incluidas gráficos de séries temporais por mês com o número de casos e as taxas de detecção e incidência, gráficos com variáveis sociodemográficas,mapa com Leaflet da distribuição dos casos por município e tabelas com DT table com indicadores por município de residência e região de saúde. 
+3. Funcionalidades Principais
+Visualização de séries temporais de casos de sífilis por ano e por mês.
+Comparação de taxas de detecção entre diferentes regiões.
+Filtros interativos para análise detalhada por ano epidemiológico e tipo de sífilis.
 
-Foi utilizado o R shiny como ferramenta de desenvolvimento. 
+3. Tecnologias Utilizadas
 
-Mais informações: http://www.portalsinan.saude.gov.br/sifilis-congenita 
+R Shiny: Para a criação da interface interativa.
+Echarts4r: Para visualização de gráficos dinâmicos.
+dplyr e tidyr: Para manipulação e transformação dos dados.
+Leaflet: para construção de mapas.
+GitHub: Para versionamento e colaboração.
+
+4. Fonte de dados 
+As bases de dados utilizadas são provenientes do SISTEMA DE INFORMAÇÃO DE AGRAVOS DE NOTIFICAÇÃO (SINAN) do Ministério da Saúde. Esta análise foi aplicada para o Estado de Santa Catarina sendo possível adaptar a outras realidades apenas mudando o UF de residência.
+
+5. Mais informações:
+   http://www.portalsinan.saude.gov.br/sifilis-congenita 
 
